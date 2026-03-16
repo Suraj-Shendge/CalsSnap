@@ -1,5 +1,5 @@
 
-import { runPrediction } from './replicateService.js';
+// import { runPrediction } from './replicateService.js';
 import { YOLOV8_MODEL_VERSION } from '../config.js';
 
 /**
