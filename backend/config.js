@@ -14,7 +14,7 @@ export const GROQ_API_KEY = process.env.GROQ_API_KEY;
 export const GROQ_MODEL   = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 
 // ------------------- YOUR PRIMARY NUTRITION API -------------------
-export const NUTRITION_API_BASE = process.env.NUTRITION_API_BASE; // custom API
+export const NUTRITION_API_BASE = process.env.NUTRITION_API_BASE; // https://food-api-w7xp.onrender.com
 export const NUTRITION_API_KEY   = process.env.NUTRITION_API_KEY   || '';
 export const NUTRITION_API_AUTH_HEADER = process.env.NUTRITION_API_AUTH_HEADER || 'Authorization';
 
