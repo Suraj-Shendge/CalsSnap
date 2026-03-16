@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "CalSnap",
-    "slug": "calsnap",
+    "name": "Bite",
+    "slug": "bite",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F26A3D"
     },
     "updates": {
       "fallbackToCacheTimeout": 0
@@ -18,13 +17,13 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.calsnap"
+      "bundleIdentifier": "com.bite.app"
     },
     "android": {
-      "package": "com.example.calsnap",
+      "package": "com.bite.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#F26A3D"
       }
     },
     "web": {
