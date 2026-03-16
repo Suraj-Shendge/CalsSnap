@@ -21,7 +21,7 @@ export const NUTRITION_API_AUTH_HEADER = process.env.NUTRITION_API_AUTH_HEADER |
 // ------------------- PUBLIC SUPPLEMENTS -------------------
 export const OPENFOODFACTS_API_BASE = process.env.OPENFOODFACTS_API_BASE; // https://world.openfoodfacts.org/api/v2
 export const USDA_API_BASE           = process.env.USDA_API_BASE;           // https://api.nal.usda.gov/fdc/v1
-export const USDA_API_KEY           = process.env.USDA_API_KEY || '';       // you need to fill this
+export const USDA_API_KEY           = process.env.USDA_API_KEY || '';       // w5kqYlpkb9LYP1K1GhMEjXdI0YGUShVYgLwkWUg0
 
 // Stripe (optional)
 export const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY;
