@@ -1,1 +1,57 @@
 
+# -------------------------------------------------
+# Codemagic – builds for iOS & Android (free tier)
+# -------------------------------------------------
+workflows:
+  ios-build:
+    name: iOS Build
+    max_build_duration: 60
+    environment:
+      node: "20"
+      npm: "latest"
+      ios: "latest"
+      vars:
+        EXPO_TOKEN: Encrypted('EXPO_TOKEN')
+        EXPO_PUBLIC_SUPABASE_URL: Encrypted('SUPABASE_URL')
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: Encrypted('SUPABASE_ANON_KEY')
+        EXPO_PUBLIC_API_URL: Encrypted('API_URL')
+    scripts:
+      - name: Install dependencies
+        script: |
+          cd mobile-app
+          npm ci
+      - name: Expo login
+        script: |
+          npx expo login -t $EXPO_TOKEN
+      - name: Build iOS .ipa
+        script: |
+          npx expo build:ios -t archive
+    artifacts:
+      - path: mobile-app/*.ipa
+        type: ipa
+
+  android-build:
+    name: Android Build
+    max_build_duration: 60
+    environment:
+      node: "20"
+      npm: "latest"
+      vars:
+        EXPO_TOKEN: Encrypted('EXPO_TOKEN')
+        EXPO_PUBLIC_SUPABASE_URL: Encrypted('SUPABASE_URL')
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: Encrypted('SUPABASE_ANON_KEY')
+        EXPO_PUBLIC_API_URL: Encrypted('API_URL')
+    scripts:
+      - name: Install dependencies
+        script: |
+          cd mobile-app
+          npm ci
+      - name: Expo login
+        script: |
+          npx expo login -t $EXPO_TOKEN
+      - name: Build Android .apk
+        script: |
+          npx expo build:android -t apk
+    artifacts:
+      - path: mobile-app/*.apk
+        type: android-apk
