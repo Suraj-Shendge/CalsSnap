@@ -20,7 +20,7 @@ app.use(express.json());
 export const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // ---------- Routes (protected) ----------
-app.use('/api/scan-food', authMiddleware, scanRouter);
+app.use('/api/food-search', foodSearchRouter);
 app.use('/api/barcode-scan', authMiddleware, barcodeRouter);
 app.use('/api/ocr-label', authMiddleware, ocrRouter);
 app.use('/api/food', authMiddleware, foodRouter);
