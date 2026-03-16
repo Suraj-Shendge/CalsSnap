@@ -8,17 +8,22 @@ workflows:
       groups:
         - mobile-env
 
-    scripts:
-      - name: Install dependencies
-        script: |
-          cd mobile-app
-          npm install
+scripts:
+  - name: Install dependencies
+    script: |
+      cd mobile-app
+      npm install
 
-      - name: Build Android APK
-        script: |
-          cd mobile-app/android
-          chmod +x gradlew
-          ./gradlew assembleRelease
+  - name: Sync Expo native config
+    script: |
+      cd mobile-app
+      npx expo prebuild
+
+  - name: Build Android APK
+    script: |
+      cd mobile-app/android
+      chmod +x gradlew
+      ./gradlew assembleRelease
 
     artifacts:
       - mobile-app/android/app/build/outputs/**/*.apk
