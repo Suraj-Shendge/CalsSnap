@@ -1,5 +1,5 @@
 
-import { runPrediction } from './replicateService.js';
+//import { runPrediction } from './replicateService.js';
 import { LLAMA3_MODEL_VERSION } from '../config.js';
 
 /**
