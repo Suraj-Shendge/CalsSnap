@@ -11,11 +11,11 @@ import {
   USDA_API_KEY,
 } from "../config.js";
 
-const cache = new NodeCache({ stdTTL: 600 }); // 10 min cache
+const cache = new NodeCache({ stdTTL: 600 });
 
-/* -----------------------------------------------------------------
-   Helper: timeout-safe fetch
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Safe fetch with timeout
+---------------------------------------------------------- */
 async function safeFetch(url, options = {}, timeout = 5000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -30,29 +30,51 @@ async function safeFetch(url, options = {}, timeout = 5000) {
   }
 }
 
-/* -----------------------------------------------------------------
-   Helper: build headers (adds API key only when present)
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Build headers
+---------------------------------------------------------- */
 function authHeaders(baseKey) {
   const headers = { "Content-Type": "application/json" };
+
   if (baseKey) {
     headers[NUTRITION_API_AUTH_HEADER] = baseKey;
   }
+
   return headers;
 }
 
-/* -----------------------------------------------------------------
-   Helper – normalize names for deduplication
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Normalize names for dedupe
+---------------------------------------------------------- */
 function normalizeName(name) {
   return (name || "")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 }
 
-/* -----------------------------------------------------------------
-   Map OpenFoodFacts → unified schema
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Ranking function
+---------------------------------------------------------- */
+function scoreFood(item, term) {
+  const name = (item.food_name || "").toLowerCase();
+  const query = term.toLowerCase();
+
+  let score = 0;
+
+  if (name === query) score += 100;
+  if (name.startsWith(query)) score += 50;
+  if (name.includes(query)) score += 20;
+
+  if (item.source === "Custom") score += 30;
+  if (item.source === "OpenFoodFacts") score += 10;
+  if (item.source === "USDA") score += 5;
+
+  return score;
+}
+
+/* ----------------------------------------------------------
+   Map OpenFoodFacts
+---------------------------------------------------------- */
 function mapOpenFoodFacts(product) {
   const nutr = product.nutriments || {};
 
@@ -70,9 +92,9 @@ function mapOpenFoodFacts(product) {
   };
 }
 
-/* -----------------------------------------------------------------
-   Map USDA → unified schema
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Map USDA
+---------------------------------------------------------- */
 function mapUSDAFood(item) {
   const nutrients = item.labelNutrients || {};
   const getVal = (obj) => Number(obj?.value ?? 0);
@@ -91,11 +113,12 @@ function mapUSDAFood(item) {
   };
 }
 
-/* -----------------------------------------------------------------
-   Custom dataset helpers
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Custom API
+---------------------------------------------------------- */
 async function getFromCustomByName(name) {
   const url = `${NUTRITION_API_BASE}/food?name=${encodeURIComponent(name)}`;
+
   const res = await safeFetch(url, {
     method: "GET",
     headers: authHeaders(NUTRITION_API_KEY),
@@ -121,9 +144,9 @@ async function getFromCustomByBarcode(barcode) {
   return await res.json();
 }
 
-/* -----------------------------------------------------------------
-   OpenFoodFacts helpers (correct endpoint)
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   OpenFoodFacts
+---------------------------------------------------------- */
 async function fuzzyFromOpenFoodFacts(term, limit = 20) {
   const url =
     `https://world.openfoodfacts.org/cgi/search.pl` +
@@ -156,9 +179,9 @@ async function getFromOpenFoodFactsByBarcode(barcode) {
   return mapOpenFoodFacts(json.product);
 }
 
-/* -----------------------------------------------------------------
-   USDA helpers
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   USDA
+---------------------------------------------------------- */
 async function fuzzyFromUSDA(term, limit = 20) {
   if (!USDA_API_KEY) return [];
 
@@ -180,20 +203,20 @@ async function fuzzyFromUSDA(term, limit = 20) {
 }
 
 async function getFromUSDAByName(name) {
-  const results = await fuzzyFromUSDA(name, 1);
-  return results[0] || null;
+  const res = await fuzzyFromUSDA(name, 1);
+  return res[0] || null;
 }
 
-/* -----------------------------------------------------------------
-   PUBLIC API
------------------------------------------------------------------ */
+/* ----------------------------------------------------------
+   Public API
+---------------------------------------------------------- */
 
 export async function getNutritionByName(name) {
   let result = await getFromCustomByName(name);
   if (result) return result;
 
-  result = await fuzzyFromOpenFoodFacts(name, 1);
-  if (result.length) return result[0];
+  const off = await fuzzyFromOpenFoodFacts(name, 1);
+  if (off.length) return off[0];
 
   return await getFromUSDAByName(name);
 }
@@ -205,9 +228,9 @@ export async function getNutritionByBarcode(barcode) {
   return await getFromOpenFoodFactsByBarcode(barcode);
 }
 
-/* -----------------------------------------------------------------
+/* ----------------------------------------------------------
    Fuzzy Search
------------------------------------------------------------------ */
+---------------------------------------------------------- */
 
 export async function fuzzySearch(term, limit = 20) {
   const cacheKey = `search:${term.toLowerCase()}`;
@@ -221,9 +244,7 @@ export async function fuzzySearch(term, limit = 20) {
   const [fromCustom, fromOpen, fromUSDA] = await Promise.all([
     (async () => {
       const url =
-        `${NUTRITION_API_BASE}/search` +
-        `?q=${encodeURIComponent(term)}` +
-        `&limit=${perSource}`;
+        `${NUTRITION_API_BASE}/search?q=${encodeURIComponent(term)}&limit=${perSource}`;
 
       const res = await safeFetch(url, {
         method: "GET",
@@ -245,17 +266,20 @@ export async function fuzzySearch(term, limit = 20) {
 
   for (const item of merged) {
     const key = normalizeName(item.food_name);
+
     if (!key) continue;
 
     if (!seen.has(key)) {
       seen.add(key);
       uniq.push(item);
     }
-
-    if (uniq.length >= limit) break;
   }
 
-  cache.set(cacheKey, uniq);
+  uniq.sort((a, b) => scoreFood(b, term) - scoreFood(a, term));
 
-  return uniq;
+  const results = uniq.slice(0, limit);
+
+  cache.set(cacheKey, results);
+
+  return results;
 }
