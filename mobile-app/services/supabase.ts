@@ -7,8 +7,13 @@ import Constants from 'expo-constants';
  */
 const extra = Constants.expoConfig?.extra || {};
 
-const supabaseUrl = extra.SUPABASE_URL;
-const supabaseAnonKey = extra.SUPABASE_ANON_KEY;
+const supabaseUrl =
+  Constants.expoConfig?.extra?.SUPABASE_URL ||
+  "https://zwmebhmfwswtmeveujtx.supabase.co";
+
+const supabaseAnonKey =
+  Constants.expoConfig?.extra?.SUPABASE_ANON_KEY ||
+  "sb_publishable_quLS4ZPZT8EUFeYuvAMlww_RMNAY9Ky";
 
 /**
  * ❌ Fail FAST instead of silent crash later
