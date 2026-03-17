@@ -13,6 +13,7 @@ import ProgressBar from '../components/ProgressBar';
 import { supabase } from '../services/supabase';
 import COLORS from '../theme/colors';
 import GlassCard from '../components/GlassCard';
+import HomeSkeleton from '../components/HomeSkeleton';
 
 // 🔥 OPTIONAL: enable haptics
 // import * as Haptics from 'expo-haptics';
@@ -51,13 +52,9 @@ export default function HomeScreen() {
     fetchData();
   }, []);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
+if (loading) {
+  return <HomeSkeleton />;
+}
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
