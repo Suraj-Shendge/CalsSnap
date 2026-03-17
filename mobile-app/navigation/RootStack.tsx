@@ -1,4 +1,4 @@
-
+import HistoryScreen from '../screens/HistoryScreen';
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import BottomTabs from './BottomTabs';
@@ -22,6 +22,7 @@ export default function RootNavigator() {
       <Stack.Screen name="Result" component={ResultScreen} />
       <Stack.Screen name="Paywall" component={PaywallScreen} />
       <Stack.Screen name="Offer" component={OfferScreen} />
+      <Stack.Screen name="History" component={HistoryScreen} />
     </Stack.Navigator>
   );
 }
