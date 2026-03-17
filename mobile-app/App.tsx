@@ -9,16 +9,12 @@ import AuthStack from './navigation/AuthStack';
 import RootNavigator from './navigation/RootStack';
 import { StripeProvider } from '@stripe/stripe-react-native';
 
-export type RootStackParamList = {
-  Auth: undefined;
-  Main: undefined;
-};
-
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
@@ -26,7 +22,6 @@ export default function App() {
       setLoading(false);
     });
 
-    // get current session
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
@@ -50,10 +45,14 @@ export default function App() {
       <PaperProvider>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {session ? (
-              <Stack.Screen name="Main" component={RootNavigator} />
+            {session || isGuest ? (
+              <Stack.Screen name="Main">
+                {() => <RootNavigator setIsGuest={setIsGuest} />}
+              </Stack.Screen>
             ) : (
-              <Stack.Screen name="Auth" component={AuthStack} />
+              <Stack.Screen name="Auth">
+                {() => <AuthStack setIsGuest={setIsGuest} />}
+              </Stack.Screen>
             )}
           </Stack.Navigator>
         </NavigationContainer>
