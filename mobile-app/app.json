@@ -32,7 +32,7 @@
     "extra": {
       "SUPABASE_URL": "https://zwmebhmfwswtmeveujtx.supabase.co",
       "SUPABASE_ANON_KEY": "sb_publishable_quLS4ZPZT8EUFeYuvAMlww_RMNAY9Ky",
-      "API_URL": "https://food-api-w7xp.onrender.com"
+      "API_URL": "https://food-api-w7xp.onrender.com",
       "STRIPE_PK": "pk_test_51TBaFA2Mhu6t9MbJ6rGbwjPIRNLygFyXWJrhwvR0VmruxKCv0HZ7X6m4hM9JBwus09TPFk3hSzLR03Mj1Ol8fzyo00bFkzPrEi"
     }
   }
