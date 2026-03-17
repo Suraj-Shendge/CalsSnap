@@ -1,18 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 
-const supabaseUrl =
-  Constants.expoConfig?.extra?.SUPABASE_URL ??
-  process.env.EXPO_PUBLIC_SUPABASE_URL;
+/**
+ * ✅ Single source of truth: app.json → expo.extra
+ */
+const extra = Constants.expoConfig?.extra || {};
 
-const supabaseAnonKey =
-  Constants.expoConfig?.extra?.SUPABASE_ANON_KEY ??
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = extra.SUPABASE_URL;
+const supabaseAnonKey = extra.SUPABASE_ANON_KEY;
 
-console.log("SUPABASE URL:", supabaseUrl);
-console.log("SUPABASE KEY:", supabaseAnonKey);
+/**
+ * ❌ Fail FAST instead of silent crash later
+ */
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    '❌ Supabase config missing. Fix app.json → expo.extra (SUPABASE_URL, SUPABASE_ANON_KEY)'
+  );
+}
 
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey
-);
+/**
+ * ✅ Create client
+ */
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
