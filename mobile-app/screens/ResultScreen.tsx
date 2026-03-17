@@ -17,6 +17,7 @@ import ProgressBar from '../components/ProgressBar';
 import COLORS from '../theme/colors';
 import GlassCard from '../components/GlassCard';
 import useFadeSlide from '../utils/useFadeSlide';
+import InteractiveButton from '../components/InteractiveButton';
 
 // 🔥 OPTIONAL: enable haptics
 // import * as Haptics from 'expo-haptics';
@@ -97,22 +98,14 @@ export default function ResultScreen() {
             <Text style={styles.label}>Portion</Text>
 
             <View style={styles.portionControls}>
-              <Pressable
-                onPress={() => {
-                  setPortion(Math.max(1, portion - 1));
-                  // Haptics.selectionAsync();
-                }}
+              <<InteractiveButton onPress={handleSave} style={styles.primaryBtn}>
               >
                 <MaterialIcons name="remove-circle" size={28} color={COLORS.primary} />
               </Pressable>
 
               <Text style={styles.portionText}>{portion}</Text>
 
-              <Pressable
-                onPress={() => {
-                  setPortion(portion + 1);
-                  // Haptics.selectionAsync();
-                }}
+              <<InteractiveButton onPress={handleSave} style={styles.primaryBtn}>
               >
                 <MaterialIcons name="add-circle" size={28} color={COLORS.primary} />
               </Pressable>
@@ -149,12 +142,7 @@ export default function ResultScreen() {
               <Text style={styles.secondaryText}>Fix</Text>
             </Pressable>
 
-            <Pressable
-              onPress={handleSave}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { transform: [{ scale: pressed ? 0.97 : 1 }] }
-              ]}
+            <<InteractiveButton onPress={handleSave} style={styles.primaryBtn}>
             >
               <Text style={styles.primaryText}>Add</Text>
             </Pressable>
