@@ -1,5 +1,5 @@
 import { updateStreak } from '../utils/streak';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,7 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
-  Animated,
-  Pressable
+  Animated
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -30,22 +29,6 @@ export default function ResultScreen() {
   const [portion, setPortion] = useState(1);
 
   const anim = useFadeSlide();
-  const translateY = useState(new Animated.Value(30))[0];
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true
-      })
-    ]).start();
-  }, []);
 
   const scaled = {
     calories: scanResult.calories * portion,
@@ -69,23 +52,19 @@ export default function ResultScreen() {
 
       await updateStreak();
 
-      // 🔥 OPTIONAL: success haptic
       // Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       Alert.alert('Saved', 'Added to your daily log');
       navigation.navigate('Home');
     } catch (e) {
-      // 🔥 OPTIONAL: error haptic
       // Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-
       Alert.alert('Error', 'Could not save entry');
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <<Animated.View style={anim.style}>
-      >
+      <Animated.View style={anim.style}>
         {/* Image */}
         <Image source={{ uri: scanResult.image_url }} style={styles.image} />
 
@@ -98,23 +77,24 @@ export default function ResultScreen() {
             <Text style={styles.label}>Portion</Text>
 
             <View style={styles.portionControls}>
-              <<InteractiveButton onPress={handleSave} style={styles.primaryBtn}>
-              >
+              <InteractiveButton onPress={() => setPortion(Math.max(1, portion - 1))}>
                 <MaterialIcons name="remove-circle" size={28} color={COLORS.primary} />
-              </Pressable>
+              </InteractiveButton>
 
               <Text style={styles.portionText}>{portion}</Text>
 
-              <<InteractiveButton onPress={handleSave} style={styles.primaryBtn}>
-              >
+              <InteractiveButton onPress={() => setPortion(portion + 1)}>
                 <MaterialIcons name="add-circle" size={28} color={COLORS.primary} />
-              </Pressable>
+              </InteractiveButton>
             </View>
           </View>
 
           {/* Health Score */}
           <Text style={styles.section}>Health Score</Text>
-          <ProgressBar progress={scanResult.health_score / 100} color={COLORS.primary} />
+          <ProgressBar
+            progress={scanResult.health_score / 100}
+            color={COLORS.primary}
+          />
 
           {/* Macros */}
           <View style={styles.macroRow}>
@@ -132,20 +112,19 @@ export default function ResultScreen() {
 
           {/* Actions */}
           <View style={styles.actions}>
-            <Pressable
+            <InteractiveButton
               onPress={() => navigation.navigate('Scan')}
-              style={({ pressed }) => [
-                styles.secondaryBtn,
-                { transform: [{ scale: pressed ? 0.97 : 1 }] }
-              ]}
+              style={styles.secondaryBtn}
             >
               <Text style={styles.secondaryText}>Fix</Text>
-            </Pressable>
+            </InteractiveButton>
 
-            <<InteractiveButton onPress={handleSave} style={styles.primaryBtn}>
+            <InteractiveButton
+              onPress={handleSave}
+              style={styles.primaryBtn}
             >
               <Text style={styles.primaryText}>Add</Text>
-            </Pressable>
+            </InteractiveButton>
           </View>
         </GlassCard>
       </Animated.View>
