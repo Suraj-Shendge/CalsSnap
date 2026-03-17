@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { saveFoodEntry } from '../services/api';
 import ProgressBar from '../components/ProgressBar';
 import { BlurView } from 'expo-blur';
+import COLORS from '../theme/colors';
 
 
 export default function ResultScreen() {
@@ -149,115 +150,43 @@ const MacroCard = ({ label, value }: any) => (
 );
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16
-  },
+  container: { padding: 16, backgroundColor: COLORS.background, alignItems: 'center' },
 
   image: {
-    width: '100%',
+    width: 260,
     height: 260,
-    borderRadius: 24,
-    marginBottom: 16
+    borderRadius: 20,
+    marginBottom: 12
   },
 
   card: {
-    borderRadius: 24,
-    padding: 16,
-    overflow: 'hidden'
+    width: '100%',
+    backgroundColor: COLORS.glass,
+    borderRadius: 20,
+    padding: 18
   },
 
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 10
-  },
-
-  section: {
-    marginTop: 12,
-    marginBottom: 6,
-    fontWeight: '600'
-  },
-
-  portionRow: {
-    marginBottom: 10
-  },
-
-  portionControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6
-  },
-
-  portionText: {
-    marginHorizontal: 12,
-    fontSize: 18,
-    fontWeight: '600'
-  },
-
-  label: {
-    fontSize: 13,
-    color: '#777'
-  },
-
-  macroRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between'
-  },
+  title: { fontSize: 24, fontWeight: '700', color: COLORS.text },
 
   macroCard: {
     width: '48%',
-    borderRadius: 16,
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    padding: 10,
+    marginVertical: 4
+  },
+
+  adviceCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 14,
     padding: 12,
-    marginBottom: 10,
-    overflow: 'hidden'
+    marginTop: 12
   },
 
-  macroLabel: {
-    fontSize: 12,
-    color: '#777'
-  },
-
-  macroValue: {
-    fontSize: 16,
-    fontWeight: '600'
-  },
-
-  advice: {
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 10
-  },
-
-  adviceTitle: {
-    fontWeight: '600',
-    marginBottom: 4
-  },
-
-  adviceText: {
-    fontSize: 14,
-    lineHeight: 20
-  },
-
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20
-  },
-
-  primaryBtn: {
-    flex: 0.48,
-    backgroundColor: '#6200ee',
-    padding: 12,
-    borderRadius: 12,
-    alignItems: 'center'
-  },
-
-  secondaryBtn: {
-    flex: 0.48,
-    backgroundColor: '#eee',
-    padding: 12,
-    borderRadius: 12,
+  doneBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 14,
+    paddingVertical: 12,
     alignItems: 'center'
   }
 });
