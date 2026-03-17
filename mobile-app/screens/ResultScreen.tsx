@@ -5,18 +5,20 @@ import {
   Text,
   Image,
   StyleSheet,
-  TouchableOpacity,
   Alert,
   ScrollView,
-  Animated
+  Animated,
+  Pressable
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { saveFoodEntry } from '../services/api';
 import ProgressBar from '../components/ProgressBar';
-import { BlurView } from 'expo-blur';
 import COLORS from '../theme/colors';
+import GlassCard from '../components/GlassCard';
 
+// 🔥 OPTIONAL: enable haptics
+// import * as Haptics from 'expo-haptics';
 
 export default function ResultScreen() {
   const route = useRoute<any>();
@@ -32,12 +34,12 @@ export default function ResultScreen() {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 400,
         useNativeDriver: true
       }),
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 500,
+        duration: 400,
         useNativeDriver: true
       })
     ]).start();
@@ -53,7 +55,6 @@ export default function ResultScreen() {
   const handleSave = async () => {
     try {
       await saveFoodEntry({
-      
         food_name: scanResult.food_name,
         calories: scaled.calories,
         protein: scaled.protein,
@@ -63,11 +64,18 @@ export default function ResultScreen() {
         health_advice: scanResult.health_advice,
         image_url: scanResult.image_url
       });
+
       await updateStreak();
+
+      // 🔥 OPTIONAL: success haptic
+      // Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       Alert.alert('Saved', 'Added to your daily log');
       navigation.navigate('Home');
     } catch (e) {
+      // 🔥 OPTIONAL: error haptic
+      // Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
       Alert.alert('Error', 'Could not save entry');
     }
   };
@@ -84,7 +92,7 @@ export default function ResultScreen() {
         <Image source={{ uri: scanResult.image_url }} style={styles.image} />
 
         {/* Main Card */}
-        <BlurView intensity={40} tint="light" style={styles.card}>
+        <GlassCard style={styles.card}>
           <Text style={styles.title}>{scanResult.food_name}</Text>
 
           {/* Portion */}
@@ -92,21 +100,31 @@ export default function ResultScreen() {
             <Text style={styles.label}>Portion</Text>
 
             <View style={styles.portionControls}>
-              <TouchableOpacity onPress={() => setPortion(Math.max(1, portion - 1))}>
-                <MaterialIcons name="remove-circle" size={28} color="#6200ee" />
-              </TouchableOpacity>
+              <Pressable
+                onPress={() => {
+                  setPortion(Math.max(1, portion - 1));
+                  // Haptics.selectionAsync();
+                }}
+              >
+                <MaterialIcons name="remove-circle" size={28} color={COLORS.primary} />
+              </Pressable>
 
               <Text style={styles.portionText}>{portion}</Text>
 
-              <TouchableOpacity onPress={() => setPortion(portion + 1)}>
-                <MaterialIcons name="add-circle" size={28} color="#6200ee" />
-              </TouchableOpacity>
+              <Pressable
+                onPress={() => {
+                  setPortion(portion + 1);
+                  // Haptics.selectionAsync();
+                }}
+              >
+                <MaterialIcons name="add-circle" size={28} color={COLORS.primary} />
+              </Pressable>
             </View>
           </View>
 
           {/* Health Score */}
           <Text style={styles.section}>Health Score</Text>
-          <ProgressBar progress={scanResult.health_score / 100} />
+          <ProgressBar progress={scanResult.health_score / 100} color={COLORS.primary} />
 
           {/* Macros */}
           <View style={styles.macroRow}>
@@ -117,25 +135,34 @@ export default function ResultScreen() {
           </View>
 
           {/* Advice */}
-          <BlurView intensity={20} tint="light" style={styles.advice}>
+          <GlassCard style={styles.advice}>
             <Text style={styles.adviceTitle}>Insight</Text>
             <Text style={styles.adviceText}>{scanResult.health_advice}</Text>
-          </BlurView>
+          </GlassCard>
 
-          {/* Buttons */}
+          {/* Actions */}
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.secondaryBtn}
+            <Pressable
               onPress={() => navigation.navigate('Scan')}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                { transform: [{ scale: pressed ? 0.97 : 1 }] }
+              ]}
             >
-              <Text>Fix</Text>
-            </TouchableOpacity>
+              <Text style={styles.secondaryText}>Fix</Text>
+            </Pressable>
 
-            <TouchableOpacity style={styles.primaryBtn} onPress={handleSave}>
-              <Text style={{ color: '#fff', fontWeight: '600' }}>Add</Text>
-            </TouchableOpacity>
+            <Pressable
+              onPress={handleSave}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                { transform: [{ scale: pressed ? 0.97 : 1 }] }
+              ]}
+            >
+              <Text style={styles.primaryText}>Add</Text>
+            </Pressable>
           </View>
-        </BlurView>
+        </GlassCard>
       </Animated.View>
     </ScrollView>
   );
@@ -143,50 +170,130 @@ export default function ResultScreen() {
 
 /* 🔥 MACRO CARD */
 const MacroCard = ({ label, value }: any) => (
-  <BlurView intensity={25} tint="light" style={styles.macroCard}>
+  <GlassCard style={styles.macroCard}>
     <Text style={styles.macroLabel}>{label}</Text>
     <Text style={styles.macroValue}>{value}</Text>
-  </BlurView>
+  </GlassCard>
 );
 
 const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: COLORS.background, alignItems: 'center' },
+  container: {
+    padding: 16,
+    backgroundColor: COLORS.background,
+    alignItems: 'center'
+  },
 
   image: {
     width: 260,
     height: 260,
-    borderRadius: 20,
-    marginBottom: 12
+    borderRadius: 22,
+    marginBottom: 14
   },
 
   card: {
-    width: '100%',
-    backgroundColor: COLORS.glass,
-    borderRadius: 20,
-    padding: 18
+    width: '100%'
   },
 
-  title: { fontSize: 24, fontWeight: '700', color: COLORS.text },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 10
+  },
+
+  portionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12
+  },
+
+  portionControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+
+  portionText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text
+  },
+
+  section: {
+    marginTop: 10,
+    marginBottom: 6,
+    fontWeight: '600',
+    color: COLORS.text
+  },
+
+  macroRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 10
+  },
 
   macroCard: {
     width: '48%',
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    padding: 10,
-    marginVertical: 4
+    marginBottom: 8
   },
 
-  adviceCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    padding: 12,
+  macroLabel: {
+    fontSize: 12,
+    color: COLORS.subText
+  },
+
+  macroValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text
+  },
+
+  advice: {
     marginTop: 12
   },
 
-  doneBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 14,
+  adviceTitle: {
+    fontWeight: '600',
+    marginBottom: 6,
+    color: COLORS.text
+  },
+
+  adviceText: {
+    color: COLORS.subText,
+    lineHeight: 18
+  },
+
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 18
+  },
+
+  secondaryBtn: {
+    flex: 0.48,
     paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.05)',
     alignItems: 'center'
+  },
+
+  secondaryText: {
+    color: COLORS.text,
+    fontWeight: '500'
+  },
+
+  primaryBtn: {
+    flex: 0.48,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center'
+  },
+
+  primaryText: {
+    color: '#fff',
+    fontWeight: '600'
   }
 });
