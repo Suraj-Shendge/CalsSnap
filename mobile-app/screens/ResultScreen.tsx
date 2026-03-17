@@ -83,11 +83,7 @@ export default function ResultScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Animated.View
-        style={{
-          opacity: fadeAnim,
-          transform: [{ translateY }]
-        }}
+      <<Animated.View style={anim.style}>
       >
         {/* Image */}
         <Image source={{ uri: scanResult.image_url }} style={styles.image} />
