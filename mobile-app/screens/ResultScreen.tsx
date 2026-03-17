@@ -16,6 +16,7 @@ import { saveFoodEntry } from '../services/api';
 import ProgressBar from '../components/ProgressBar';
 import COLORS from '../theme/colors';
 import GlassCard from '../components/GlassCard';
+import useFadeSlide from '../utils/useFadeSlide';
 
 // 🔥 OPTIONAL: enable haptics
 // import * as Haptics from 'expo-haptics';
@@ -27,7 +28,7 @@ export default function ResultScreen() {
 
   const [portion, setPortion] = useState(1);
 
-  const fadeAnim = useState(new Animated.Value(0))[0];
+  const anim = useFadeSlide();
   const translateY = useState(new Animated.Value(30))[0];
 
   useEffect(() => {
