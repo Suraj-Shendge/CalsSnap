@@ -1,4 +1,4 @@
-
+import 'react-native-url-polyfill/auto';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
