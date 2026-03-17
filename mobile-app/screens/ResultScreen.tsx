@@ -14,6 +14,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { saveFoodEntry } from '../services/api';
 import ProgressBar from '../components/ProgressBar';
 import { BlurView } from 'expo-blur';
+import { updateStreak } from '../utils/streak';
 
 export default function ResultScreen() {
   const route = useRoute<any>();
@@ -49,6 +50,7 @@ export default function ResultScreen() {
 
   const handleSave = async () => {
     try {
+      await updateStreak();
       await saveFoodEntry({
         food_name: scanResult.food_name,
         calories: scaled.calories,
