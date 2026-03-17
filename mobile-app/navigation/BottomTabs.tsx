@@ -1,13 +1,13 @@
-
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+
 import HomeScreen from '../screens/HomeScreen';
 import PlanScreen from '../screens/PlanScreen';
 import ScanScreen from '../screens/ScanScreen';
 import AnalysisScreen from '../screens/AnalysisScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import { MaterialIcons } from '@expo/vector-icons';
-import { View, StyleSheet } from 'react-native';
 
 export type BottomTabParamList = {
   Home: undefined;
@@ -25,30 +25,50 @@ export default function BottomTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          height: 60,
-          borderTopWidth: 0,
-          elevation: 5
-        },
-        tabBarIcon: ({ focused, color, size }) => {
+
+        // 🔥 GLASS + FLOATING TAB BAR
+        tabBarStyle: styles.tabBar,
+
+        tabBarIcon: ({ focused }) => {
           const icons: Record<string, keyof typeof MaterialIcons.glyphMap> = {
             Home: 'home',
             Plan: 'event-note',
-            Scan: 'camera',
-            Analysis: 'assessment',
+            Scan: 'camera-alt',
+            Analysis: 'insights',
             Settings: 'settings'
           };
-          const name = icons[route.name];
+
+          const iconName = icons[route.name];
+
+          // 🔥 CENTER FLOATING BUTTON
           if (route.name === 'Scan') {
             return (
-              <View style={styles.scanButton}>
-                <MaterialIcons name={name} size={30} color="#fff" />
+              <View style={styles.scanWrapper}>
+                <View style={styles.scanShadow} />
+                <View style={styles.scanButton}>
+                  <MaterialIcons name={iconName} size={30} color="#fff" />
+                </View>
               </View>
             );
           }
-          return <MaterialIcons name={name} size={28} color={focused ? '#6200ee' : '#777'} />;
-        }
+
+          return (
+            <MaterialIcons
+              name={iconName}
+              size={26}
+              color={focused ? '#FF6A3D' : '#999'}
+            />
+          );
+        },
+
+        // 🔥 PRESS EFFECT (feels premium)
+        tabBarButton: (props) => (
+          <TouchableOpacity
+            {...props}
+            activeOpacity={0.7}
+            style={styles.tabButton}
+          />
+        )
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
@@ -61,14 +81,66 @@ export default function BottomTabs() {
 }
 
 const styles = StyleSheet.create({
+  // 🔥 MAIN TAB BAR (iOS STYLE FLOATING)
+  tabBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+
+    height: 70,
+    borderRadius: 25,
+
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderTopWidth: 0,
+
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 10 },
+    shadowRadius: 20,
+  },
+
+  tabButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+
+  // 🔥 SCAN BUTTON CONTAINER (creates notch illusion)
+  scanWrapper: {
+    position: 'absolute',
+    top: -30,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+
+  // 🔥 SHADOW LAYER (depth)
+  scanShadow: {
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FF6A3D',
+    opacity: 0.25,
+    transform: [{ scale: 1.2 }]
+  },
+
+  // 🔥 MAIN BUTTON
   scanButton: {
-    backgroundColor: '#6200ee',
-    width: 66,
-    height: 66,
-    borderRadius: 33,
+    width: 65,
+    height: 65,
+    borderRadius: 32.5,
+
+    backgroundColor: '#FF6A3D',
+
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -30,
-    elevation: 5
+
+    elevation: 10,
+    shadowColor: '#FF6A3D',
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 10,
   }
 });
