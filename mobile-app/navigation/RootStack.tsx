@@ -5,6 +5,8 @@ import BottomTabs from './BottomTabs';
 import ResultScreen from '../screens/ResultScreen';
 import PaywallScreen from '../screens/PaywallScreen';
 import OfferScreen from '../screens/OfferScreen';
+import HomeScreen from '../screens/HomeScreen';
+
 
 export type RootStackParamList = {
   Main: undefined;
@@ -13,16 +15,27 @@ export type RootStackParamList = {
   Offer: undefined;
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator();
 
-export default function RootNavigator() {
+export default function RootStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Main" component={BottomTabs} />
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+
+        animation: 'slide_from_right',
+
+        // 🔥 THIS is what makes it feel iOS-level smooth
+        animationDuration: 250,
+
+        gestureEnabled: true,
+        fullScreenGestureEnabled: true
+      }}
+    >
+      <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Result" component={ResultScreen} />
-      <Stack.Screen name="Paywall" component={PaywallScreen} />
-      <Stack.Screen name="Offer" component={OfferScreen} />
       <Stack.Screen name="History" component={HistoryScreen} />
+      <Stack.Screen name="Paywall" component={PaywallScreen} />
     </Stack.Navigator>
   );
 }
