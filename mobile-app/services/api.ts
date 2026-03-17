@@ -7,6 +7,15 @@ import { supabase } from "./supabase";
  * - Expo dev
  * - EAS / Codemagic builds
  */
+{
+  "expo": {
+    "extra": {
+      "supabaseUrl": "https://zwmebhmfwswtmeveujtx.supabase.co",
+      "supabaseAnonKey": "sb_publishable_quLS4ZPZT8EUFeYuvAMlww_RMNAY9Ky"
+    }
+  }
+}
+
 const API_URL =
   process.env.EXPO_PUBLIC_API_URL ||
   Constants?.expoConfig?.extra?.API_URL ||
