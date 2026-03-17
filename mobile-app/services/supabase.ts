@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import Constants from 'expo-constants';
 
+
 /**
  * ✅ Single source of truth: app.json → expo.extra
  */
@@ -17,7 +18,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     '❌ Supabase config missing. Fix app.json → expo.extra (SUPABASE_URL, SUPABASE_ANON_KEY)'
   );
 }
-
+console.log("EXTRA:", Constants.expoConfig?.extra);
+console.log("SUPABASE URL:", supabaseUrl);
 /**
  * ✅ Create client
  */
