@@ -1,10 +1,10 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Camera } from 'expo-camera';
 import { MaterialIcons } from '@expo/vector-icons';
 import { scanFood } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import { canUseFeature, incrementUsage } from '../utils/usage';
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
@@ -21,11 +21,36 @@ export default function ScanScreen() {
 
   const capture = async () => {
     if (!camRef.current) return;
+
+    // 🔥 PAYWALL CHECK (this was missing)
+    const allowed = await canUseFeature();
+    if (!allowed) {
+      Alert.alert(
+        "Limit reached",
+        "You’ve used your free scans. Create an account to continue.",
+        [
+          {
+            text: "Go to Paywall",
+            onPress: () => navigation.navigate('Paywall')
+          },
+          { text: "Cancel", style: "cancel" }
+        ]
+      );
+      return;
+    }
+
     setLoading(true);
+
     try {
       const photo = await camRef.current.takePictureAsync({ quality: 0.7 });
+
+      // 🔥 increment usage BEFORE API (important)
+      await incrementUsage();
+
       const result = await scanFood(photo.uri);
+
       navigation.navigate('Result', { scanResult: result });
+
     } catch (e: any) {
       console.error(e);
       Alert.alert('Scan error', e.message);
