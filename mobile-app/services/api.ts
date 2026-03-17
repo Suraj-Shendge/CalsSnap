@@ -3,34 +3,24 @@ import * as FileSystem from "expo-file-system";
 import { supabase } from "./supabase";
 
 /**
- * Resolve API URL safely for:
- * - Expo dev
- * - EAS / Codemagic builds
+ * ✅ Read config ONLY from app.json (expo.extra)
  */
-{
-  "expo": {
-    "extra": {
-      "supabaseUrl": "https://zwmebhmfwswtmeveujtx.supabase.co",
-      "supabaseAnonKey": "sb_publishable_quLS4ZPZT8EUFeYuvAMlww_RMNAY9Ky"
-    }
-  }
-}
+const extra = Constants.expoConfig?.extra || {};
 
-const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  Constants?.expoConfig?.extra?.API_URL ||
-  Constants?.manifest?.extra?.API_URL ||
-  "";
+const API_URL = extra.API_URL;
 
 if (!API_URL) {
-  console.warn("⚠️ API_URL is empty. Check EXPO_PUBLIC_API_URL env variable.");
+  throw new Error("❌ API_URL missing. Fix app.json → expo.extra.API_URL");
 }
 
+/**
+ * Core backend request handler
+ */
 async function backendFetch(
   endpoint: string,
-  method = "GET",
+  method: string = "GET",
   body?: any,
-  isFormData = false
+  isFormData: boolean = false
 ) {
   const { data } = await supabase.auth.getSession();
   const session = data?.session;
@@ -61,11 +51,11 @@ async function backendFetch(
   return response.json();
 }
 
-/** Scan a food image */
+/** 📸 Scan food image */
 export async function scanFood(imageUri: string) {
   const form = new FormData();
 
-  // @ts-ignore React Native FormData format
+  // @ts-ignore (React Native FormData)
   form.append("image", {
     uri: imageUri,
     name: `scan_${Date.now()}.jpg`,
@@ -75,27 +65,27 @@ export async function scanFood(imageUri: string) {
   return backendFetch("/scan-food", "POST", form, true);
 }
 
-/** Save a scanned entry */
+/** 💾 Save entry */
 export async function saveFoodEntry(entry: any) {
   return backendFetch("/food/save", "POST", entry);
 }
 
-/** Get today's nutrition summary */
+/** 📊 Daily summary */
 export async function getDailySummary() {
   return backendFetch("/food/daily-summary");
 }
 
-/** Get food history */
+/** 📜 History */
 export async function getFoodHistory(limit = 20, offset = 0) {
   return backendFetch(`/food/history?limit=${limit}&offset=${offset}`);
 }
 
-/** Barcode lookup */
+/** 🔍 Barcode scan */
 export async function barcodeLookup(barcode: string) {
   return backendFetch("/barcode-scan", "POST", { barcode });
 }
 
-/** OCR label scan */
+/** 🧾 OCR label */
 export async function ocrLabel(imageUri: string) {
   const form = new FormData();
 
