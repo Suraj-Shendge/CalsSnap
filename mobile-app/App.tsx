@@ -1,6 +1,6 @@
 // Complete replacement for mobile-app/App.tsx
 import 'react-native-url-polyfill/auto';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, StyleSheet, AppState } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
@@ -17,7 +17,6 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
-  const [appState, setAppState] = useState(AppState.currentState);
 
   // Check existing session on app start
   useEffect(() => {
