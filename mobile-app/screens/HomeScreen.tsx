@@ -42,19 +42,23 @@ export default function HomeScreen() {
         console.log('Daily summary fetched:', sum);
         setSummary(sum);
 
-        console.log('Fetching user goals...');
-        const { data, error } = await supabase
-          .from('UserGoals')
-          .select('*')
-          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-          .single();
+        // Only fetch goals for authenticated users
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log('Fetching user goals...');
+          const { data, error } = await supabase
+            .from('UserGoals')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
 
-        if (error) {
-          console.error('User goals fetch error:', error);
-          // Don't fail completely, just continue without goals
-        } else if (data) {
-          console.log('User goals fetched:', data);
-          setGoals(data);
+          if (error) {
+            console.error('User goals fetch error:', error);
+            // Don't fail completely, just continue without goals
+          } else if (data) {
+            console.log('User goals fetched:', data);
+            setGoals(data);
+          }
         }
       } catch (err: any) {
         console.error('Home screen data fetch error:', err);
@@ -64,7 +68,7 @@ export default function HomeScreen() {
       } finally {
         setLoading(false);
 
-        // 🔥 subtle screen fade
+        // Subtle screen fade
         Animated.timing(fade, {
           toValue: 1,
           duration: 400,
@@ -93,7 +97,7 @@ export default function HomeScreen() {
       <Animated.View style={{ opacity: fade }}>
         <Text style={styles.title}>Today</Text>
 
-        {/* 🔥 CALORIES CARD */}
+        {/* Calories Card */}
         <Pressable
           style={({ pressed }) => [
             { transform: [{ scale: pressed ? 0.98 : 1 }] }
@@ -119,7 +123,7 @@ export default function HomeScreen() {
           </GlassCard>
         </Pressable>
 
-        {/* 🔥 MACROS */}>
+        {/* Macros */}
         <View style={styles.row}>
           {[
             { key: 'protein', label: 'Protein' },
@@ -150,12 +154,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: COLORS.background
-  },
-
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
   },
 
   title: {
