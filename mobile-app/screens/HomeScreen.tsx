@@ -1,3 +1,4 @@
+// Complete replacement for mobile-app/screens/HomeScreen.tsx with proper SVG support
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -8,11 +9,95 @@ import {
   Pressable
 } from 'react-native';
 import { getDailySummary } from '../services/api';
-import ProgressBar from '../components/ProgressBar';
 import { supabase } from '../services/supabase';
 import COLORS from '../theme/colors';
 import GlassCard from '../components/GlassCard';
 import HomeSkeleton from '../components/HomeSkeleton';
+import Svg, { Circle, G } from 'react-native-svg';
+
+// MultiRingProgress Component
+const MultiRingProgress = ({ nutrients, size = 180, strokeWidth = 10 }) => {
+  const [animatedValues, setAnimatedValues] = useState(nutrients.map(() => 0));
+  
+  useEffect(() => {
+    const intervals = nutrients.map((_, index) => {
+      const target = Math.min(Math.max(nutrients[index].progress, 0), 1);
+      return setInterval(() => {
+        setAnimatedValues(prev => {
+          const newValues = [...prev];
+          if (newValues[index] < target) {
+            newValues[index] = Math.min(newValues[index] + 0.02, target);
+          } else {
+            clearInterval(intervals[index]);
+          }
+          return newValues;
+        });
+      }, 20);
+    });
+    
+    return () => intervals.forEach(interval => clearInterval(interval));
+  }, [nutrients]);
+
+  const radius = (size - strokeWidth * nutrients.length) / 2;
+
+  return (
+    <View style={[styles.ringContainer, { width: size, height: size }]}>
+      <Svg width={size} height={size}>
+        <G rotation="-90" origin={`${size / 2}, ${size / 2}`}>
+          {nutrients.map((nutrient, index) => {
+            const ringRadius = radius - (index * strokeWidth * 1.8);
+            const circumference = ringRadius * 2 * Math.PI;
+            const progress = animatedValues[index];
+            const strokeDashoffset = circumference * (1 - progress);
+            
+            return (
+              <G key={nutrient.name}>
+                {/* Background ring */}
+                <Circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={ringRadius}
+                  stroke="#f0f0f0"
+                  strokeWidth={strokeWidth * 0.5}
+                  fill="none"
+                />
+                {/* Progress ring */}
+                <Circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={ringRadius}
+                  stroke={nutrient.color}
+                  strokeWidth={strokeWidth}
+                  strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={strokeDashoffset}
+                  fill="none"
+                />
+              </G>
+            );
+          })}
+        </G>
+      </Svg>
+      
+      {/* Center display */}
+      {nutrients.length > 0 && (
+        <View style={styles.centerContent}>
+          <Text style={styles.centerValue}>
+            {Math.round(nutrients[0].currentValue || 0)}
+          </Text>
+          <Text style={styles.centerLabel}>
+            {nutrients[0].name}
+          </Text>
+          {nutrients[0].goal && (
+            <Text style={styles.centerSub}>
+              of {Math.round(nutrients[0].goal)} goal
+            </Text>
+          )}
+        </View>
+      )}
+    </View>
+  );
+};
 
 export default function HomeScreen() {
   const [summary, setSummary] = useState<any>(null);
@@ -97,38 +182,57 @@ export default function HomeScreen() {
       <Animated.View style={{ opacity: fade }}>
         <Text style={styles.title}>Today</Text>
 
-        {/* Calories Card */}
-        <Pressable
-          style={({ pressed }) => [
-            { transform: [{ scale: pressed ? 0.98 : 1 }] }
-          ]}
-        >
-          <GlassCard style={styles.card}>
-            <Text style={styles.label}>Calories</Text>
-            <Text style={styles.bigValue}>
-              {safeSummary.calories?.toFixed(0) || '0'} kcal
+        {/* Nutrition Rings Card */}
+        <GlassCard style={styles.nutritionCard}>
+          <Text style={styles.cardTitle}>Nutrition Progress</Text>
+          
+          <MultiRingProgress
+            nutrients={[
+              {
+                name: 'Calories',
+                progress: goals?.calorie_goal ? safeSummary.calories / goals.calorie_goal : 0,
+                color: '#FF6A3D',
+                currentValue: safeSummary.calories,
+                goal: goals?.calorie_goal
+              },
+              {
+                name: 'Protein',
+                progress: goals?.protein_goal ? safeSummary.protein / goals.protein_goal : 0,
+                color: '#4A90E2',
+                currentValue: safeSummary.protein,
+                goal: goals?.protein_goal
+              },
+              {
+                name: 'Carbs',
+                progress: goals?.carb_goal ? safeSummary.carbs / goals.carb_goal : 0,
+                color: '#7ED321',
+                currentValue: safeSummary.carbs,
+                goal: goals?.carb_goal
+              },
+              {
+                name: 'Fat',
+                progress: goals?.fat_goal ? safeSummary.fat / goals.fat_goal : 0,
+                color: '#F5A623',
+                currentValue: safeSummary.fat,
+                goal: goals?.fat_goal
+              }
+            ]}
+          />
+          
+          {/* Remaining calories text */}
+          {goals?.calorie_goal && (
+            <Text style={styles.remaining}>
+              {Math.max(0, goals.calorie_goal - safeSummary.calories)} calories remaining
             </Text>
+          )}
+        </GlassCard>
 
-            {goals?.calorie_goal && (
-              <>
-                <ProgressBar
-                  progress={safeSummary.calories / goals.calorie_goal}
-                  color={COLORS.primary}
-                />
-                <Text style={styles.sub}>
-                  {Math.max(0, goals.calorie_goal - safeSummary.calories)} remaining
-                </Text>
-              </>
-            )}
-          </GlassCard>
-        </Pressable>
-
-        {/* Macros */}
+        {/* Individual Macros (small cards) */}
         <View style={styles.row}>
           {[
-            { key: 'protein', label: 'Protein' },
-            { key: 'carbs', label: 'Carbs' },
-            { key: 'fat', label: 'Fat' }
+            { key: 'protein', label: 'Protein', unit: 'g', color: '#4A90E2' },
+            { key: 'carbs', label: 'Carbs', unit: 'g', color: '#7ED321' },
+            { key: 'fat', label: 'Fat', unit: 'g', color: '#F5A623' }
           ].map((item, i) => (
             <Pressable
               key={i}
@@ -139,7 +243,7 @@ export default function HomeScreen() {
               <GlassCard style={styles.smallCard}>
                 <Text style={styles.label}>{item.label}</Text>
                 <Text style={styles.value}>
-                  {safeSummary[item.key]?.toFixed(1) || '0'} g
+                  {safeSummary[item.key]?.toFixed(1) || '0'} {item.unit}
                 </Text>
               </GlassCard>
             </Pressable>
@@ -163,13 +267,61 @@ const styles = StyleSheet.create({
     marginBottom: 14
   },
 
-  card: {
-    marginBottom: 14
+  nutritionCard: {
+    marginBottom: 14,
+    alignItems: 'center',
+    padding: 20
+  },
+
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 16
+  },
+
+  ringContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginVertical: 10
+  },
+
+  centerContent: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  centerValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+
+  centerLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
+  },
+
+  centerSub: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+
+  remaining: {
+    fontSize: 14,
+    color: COLORS.subText,
+    marginTop: 12,
+    textAlign: 'center'
   },
 
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    marginTop: 10
   },
 
   smallCard: {
@@ -182,22 +334,9 @@ const styles = StyleSheet.create({
     marginBottom: 4
   },
 
-  bigValue: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 6
-  },
-
   value: {
     fontSize: 18,
     fontWeight: '600',
     color: COLORS.text
-  },
-
-  sub: {
-    fontSize: 12,
-    color: COLORS.subText,
-    marginTop: 4
   }
 });
