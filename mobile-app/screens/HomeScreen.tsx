@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
   Animated,
   Pressable
@@ -22,22 +21,49 @@ export default function HomeScreen() {
   const [summary, setSummary] = useState<any>(null);
   const [goals, setGoals] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fade = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('Home screen loading timeout');
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+  }, [loading]);
+
+  useEffect(() => {
     async function fetchData() {
       try {
+        console.log('Fetching daily summary...');
         const sum = await getDailySummary();
+        console.log('Daily summary fetched:', sum);
         setSummary(sum);
 
-        const { data } = await supabase
+        console.log('Fetching user goals...');
+        const { data, error } = await supabase
           .from('UserGoals')
           .select('*')
           .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
           .single();
 
-        if (data) setGoals(data);
+        if (error) {
+          console.error('User goals fetch error:', error);
+          // Don't fail completely, just continue without goals
+        } else if (data) {
+          console.log('User goals fetched:', data);
+          setGoals(data);
+        }
+      } catch (err) {
+        console.error('Home screen data fetch error:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+        // Set default values to prevent app crash
+        setSummary({ calories: 0, protein: 0, carbs: 0, fat: 0 });
       } finally {
         setLoading(false);
 
@@ -49,12 +75,21 @@ export default function HomeScreen() {
         }).start();
       }
     }
+    
     fetchData();
   }, []);
 
-if (loading) {
-  return <HomeSkeleton />;
-}
+  if (loading) {
+    return <HomeSkeleton />;
+  }
+
+  // Show error message if needed
+  if (error) {
+    console.log('Displaying error state:', error);
+  }
+
+  // Provide default values if summary is null
+  const safeSummary = summary || { calories: 0, protein: 0, carbs: 0, fat: 0 };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -74,17 +109,17 @@ if (loading) {
           <GlassCard style={styles.card}>
             <Text style={styles.label}>Calories</Text>
             <Text style={styles.bigValue}>
-              {summary.calories.toFixed(0)} kcal
+              {safeSummary.calories?.toFixed(0) || '0'} kcal
             </Text>
 
             {goals?.calorie_goal && (
               <>
                 <ProgressBar
-                  progress={summary.calories / goals.calorie_goal}
+                  progress={safeSummary.calories / goals.calorie_goal}
                   color={COLORS.primary}
                 />
                 <Text style={styles.sub}>
-                  {Math.max(0, goals.calorie_goal - summary.calories)} remaining
+                  {Math.max(0, goals.calorie_goal - safeSummary.calories)} remaining
                 </Text>
               </>
             )}
@@ -111,7 +146,7 @@ if (loading) {
               <GlassCard style={styles.smallCard}>
                 <Text style={styles.label}>{item.label}</Text>
                 <Text style={styles.value}>
-                  {summary[item.key].toFixed(1)} g
+                  {safeSummary[item.key]?.toFixed(1) || '0'} g
                 </Text>
               </GlassCard>
             </Pressable>
