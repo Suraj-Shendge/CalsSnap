@@ -1,4 +1,4 @@
-// Complete replacement for mobile-app/screens/HomeScreen.tsx with proper SVG support
+// Complete replacement for mobile-app/screens/HomeScreen.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -6,13 +6,17 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
-  Pressable
+  Pressable,
+  TouchableOpacity,
+  Alert
 } from 'react-native';
 import { getDailySummary } from '../services/api';
 import { supabase } from '../services/supabase';
 import COLORS from '../theme/colors';
 import GlassCard from '../components/GlassCard';
 import HomeSkeleton from '../components/HomeSkeleton';
+import { useNavigation } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Circle, G } from 'react-native-svg';
 
 // MultiRingProgress Component
@@ -100,10 +104,12 @@ const MultiRingProgress = ({ nutrients, size = 180, strokeWidth = 10 }) => {
 };
 
 export default function HomeScreen() {
+  const navigation = useNavigation<any>();
   const [summary, setSummary] = useState<any>(null);
   const [goals, setGoals] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [streak, setStreak] = useState(0);
 
   const fade = useState(new Animated.Value(0))[0];
 
@@ -127,7 +133,7 @@ export default function HomeScreen() {
         console.log('Daily summary fetched:', sum);
         setSummary(sum);
 
-        // Only fetch goals for authenticated users
+        // Fetch user goals
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           console.log('Fetching user goals...');
@@ -139,16 +145,25 @@ export default function HomeScreen() {
 
           if (error) {
             console.error('User goals fetch error:', error);
-            // Don't fail completely, just continue without goals
           } else if (data) {
             console.log('User goals fetched:', data);
             setGoals(data);
+          }
+
+          // Fetch streak
+          const { data: streakData, error: streakError } = await supabase
+            .from('Users')
+            .select('streak')
+            .eq('id', user.id)
+            .single();
+
+          if (!streakError && streakData) {
+            setStreak(streakData.streak || 0);
           }
         }
       } catch (err: any) {
         console.error('Home screen data fetch error:', err);
         setError(err.message || 'Unknown error occurred');
-        // Set default values to prevent app crash
         setSummary({ calories: 0, protein: 0, carbs: 0, fat: 0 });
       } finally {
         setLoading(false);
@@ -164,6 +179,29 @@ export default function HomeScreen() {
     
     fetchData();
   }, []);
+
+  const handleManualSearch = () => {
+    Alert.prompt(
+      'Manual Food Search',
+      'Enter food name:',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Search',
+          onPress: (foodName) => {
+            if (foodName && foodName.trim()) {
+              // Navigate to manual search screen or show results
+              Alert.alert('Search', `Searching for: ${foodName}`);
+            }
+          }
+        }
+      ],
+      'plain-text'
+    );
+  };
 
   if (loading) {
     return <HomeSkeleton />;
@@ -181,6 +219,15 @@ export default function HomeScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Animated.View style={{ opacity: fade }}>
         <Text style={styles.title}>Today</Text>
+
+        {/* Streak Card */}
+        <GlassCard style={styles.streakCard}>
+          <View style={styles.streakHeader}>
+            <MaterialIcons name="local-fire-department" size={24} color="#FF6A3D" />
+            <Text style={styles.streakTitle}>Day Streak</Text>
+          </View>
+          <Text style={styles.streakValue}>{streak} days</Text>
+        </GlassCard>
 
         {/* Nutrition Rings Card */}
         <GlassCard style={styles.nutritionCard}>
@@ -227,28 +274,41 @@ export default function HomeScreen() {
           )}
         </GlassCard>
 
-        {/* Individual Macros (small cards) */}
-        <View style={styles.row}>
-          {[
-            { key: 'protein', label: 'Protein', unit: 'g', color: '#4A90E2' },
-            { key: 'carbs', label: 'Carbs', unit: 'g', color: '#7ED321' },
-            { key: 'fat', label: 'Fat', unit: 'g', color: '#F5A623' }
-          ].map((item, i) => (
-            <Pressable
-              key={i}
-              style={({ pressed }) => [
-                { transform: [{ scale: pressed ? 0.96 : 1 }] }
-              ]}
-            >
-              <GlassCard style={styles.smallCard}>
-                <Text style={styles.label}>{item.label}</Text>
-                <Text style={styles.value}>
-                  {safeSummary[item.key]?.toFixed(1) || '0'} {item.unit}
-                </Text>
-              </GlassCard>
-            </Pressable>
-          ))}
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => navigation.navigate('Scan')}
+          >
+            <MaterialIcons name="camera-alt" size={24} color="#FFF" />
+            <Text style={styles.actionText}>Scan Food</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.secondaryButton]} 
+            onPress={handleManualSearch}
+          >
+            <MaterialIcons name="search" size={24} color={COLORS.primary} />
+            <Text style={[styles.actionText, styles.secondaryText]}>Manual Search</Text>
+          </TouchableOpacity>
         </View>
+
+        {/* Recent Foods */}
+        <GlassCard style={styles.recentCard}>
+          <Text style={styles.sectionTitle}>Recent Foods</Text>
+          <Text style={styles.emptyText}>No foods logged today</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Scan')}>
+            <Text style={styles.addFoodText}>+ Add your first food</Text>
+          </TouchableOpacity>
+        </GlassCard>
+
+        {/* Nutrition Tips */}
+        <GlassCard style={styles.tipsCard}>
+          <Text style={styles.sectionTitle}>Nutrition Tip</Text>
+          <Text style={styles.tipText}>
+            Drink water before meals to help control portion sizes and support digestion.
+          </Text>
+        </GlassCard>
       </Animated.View>
     </ScrollView>
   );
@@ -265,6 +325,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.text,
     marginBottom: 14
+  },
+
+  streakCard: {
+    marginBottom: 14,
+    padding: 16
+  },
+
+  streakHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+
+  streakTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginLeft: 8
+  },
+
+  streakValue: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: COLORS.primary
   },
 
   nutritionCard: {
@@ -318,25 +402,70 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
 
-  row: {
+  quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10
+    marginBottom: 14
   },
 
-  smallCard: {
-    width: '32%'
+  actionButton: {
+    flex: 0.48,
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center'
   },
 
-  label: {
-    fontSize: 13,
-    color: COLORS.subText,
-    marginBottom: 4
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: COLORS.primary
   },
 
-  value: {
+  actionText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8
+  },
+
+  secondaryText: {
+    color: COLORS.primary
+  },
+
+  recentCard: {
+    marginBottom: 14,
+    padding: 16
+  },
+
+  sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.text
+    color: COLORS.text,
+    marginBottom: 12
+  },
+
+  emptyText: {
+    color: COLORS.subText,
+    textAlign: 'center',
+    marginBottom: 12
+  },
+
+  addFoodText: {
+    color: COLORS.primary,
+    textAlign: 'center',
+    fontWeight: '600'
+  },
+
+  tipsCard: {
+    padding: 16
+  },
+
+  tipText: {
+    color: COLORS.subText,
+    fontStyle: 'italic',
+    textAlign: 'center'
   }
 });
