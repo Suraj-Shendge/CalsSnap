@@ -1,3 +1,4 @@
+// Complete replacement for mobile-app/screens/AnalysisScreen.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -8,9 +9,11 @@ import {
   Animated,
   TouchableOpacity
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { getDailySummary } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
+import COLORS from '../theme/colors';
+import GlassCard from '../components/GlassCard';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function AnalysisScreen() {
   const navigation = useNavigation<any>();
@@ -49,37 +52,111 @@ export default function AnalysisScreen() {
     return 'You are on track';
   };
 
+  const getMacroBalance = () => {
+    if (!summary) return { protein: 0, carbs: 0, fat: 0 };
+    
+    const total = summary.protein + summary.carbs + summary.fat;
+    if (total === 0) return { protein: 0, carbs: 0, fat: 0 };
+    
+    return {
+      protein: (summary.protein / total) * 100,
+      carbs: (summary.carbs / total) * 100,
+      fat: (summary.fat / total) * 100
+    };
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
+
+  const macroBalance = getMacroBalance();
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Animated.View style={{ opacity: fade }}>
         <Text style={styles.title}>Analysis</Text>
 
-        {/* 🔥 DAILY STATUS */}
-        <BlurView intensity={40} tint="light" style={styles.card}>
+        {/* Daily Status */}
+        <GlassCard style={styles.card}>
           <Text style={styles.label}>Today</Text>
           <Text style={styles.big}>{summary?.calories || 0} kcal</Text>
           <Text style={styles.feedback}>{getFeedback()}</Text>
-        </BlurView>
+        </GlassCard>
 
-        {/* 🔥 MACRO BALANCE */}
-        <BlurView intensity={30} tint="light" style={styles.card}>
+        {/* Macro Balance */}
+        <GlassCard style={styles.card}>
           <Text style={styles.section}>Macro Balance</Text>
+          
+          <View style={styles.macroItem}>
+            <View style={styles.macroHeader}>
+              <MaterialIcons name="fitness-center" size={20} color="#4A90E2" />
+              <Text style={styles.macroLabel}>Protein</Text>
+            </View>
+            <Text style={styles.macroValue}>{macroBalance.protein.toFixed(1)}%</Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { 
+                    width: `${macroBalance.protein}%`, 
+                    backgroundColor: '#4A90E2' 
+                  }
+                ]} 
+              />
+            </View>
+          </View>
+          
+          <View style={styles.macroItem}>
+            <View style={styles.macroHeader}>
+              <MaterialIcons name="grain" size={20} color="#7ED321" />
+              <Text style={styles.macroLabel}>Carbs</Text>
+            </View>
+            <Text style={styles.macroValue}>{macroBalance.carbs.toFixed(1)}%</Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { 
+                    width: `${macroBalance.carbs}%`, 
+                    backgroundColor: '#7ED321' 
+                  }
+                ]} 
+              />
+            </View>
+          </View>
+          
+          <View style={styles.macroItem}>
+            <View style={styles.macroHeader}>
+              <MaterialIcons name="opacity" size={20} color="#F5A623" />
+              <Text style={styles.macroLabel}>Fat</Text>
+            </View>
+            <Text style={styles.macroValue}>{macroBalance.fat.toFixed(1)}%</Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { 
+                    width: `${macroBalance.fat}%`, 
+                    backgroundColor: '#F5A623' 
+                  }
+                ]} 
+              />
+            </View>
+          </View>
+        </GlassCard>
 
-          <Text>Protein: {summary?.protein?.toFixed(1)} g</Text>
-          <Text>Carbs: {summary?.carbs?.toFixed(1)} g</Text>
-          <Text>Fat: {summary?.fat?.toFixed(1)} g</Text>
-        </BlurView>
+        {/* Weekly Trends */}
+        <GlassCard style={styles.card}>
+          <Text style={styles.section}>Weekly Trends</Text>
+          <Text style={styles.comingSoon}>Chart visualization coming soon</Text>
+        </GlassCard>
 
-        {/* 🔒 PREMIUM */}
-        <BlurView intensity={20} tint="light" style={styles.lockedCard}>
+        {/* Premium Insights */}
+        <GlassCard style={styles.lockedCard}>
           <Text style={styles.section}>Advanced Insights 🔒</Text>
           <Text style={styles.lockedText}>
             Weekly trends, fat loss prediction, and deeper analysis
@@ -89,11 +166,11 @@ export default function AnalysisScreen() {
             style={styles.upgradeBtn}
             onPress={() => navigation.navigate('Paywall')}
           >
-            <Text style={{ color: '#fff', fontWeight: '600' }}>
+            <Text style={styles.upgradeText}>
               Unlock Premium
             </Text>
           </TouchableOpacity>
-        </BlurView>
+        </GlassCard>
       </Animated.View>
     </ScrollView>
   );
@@ -101,7 +178,8 @@ export default function AnalysisScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16
+    padding: 16,
+    backgroundColor: COLORS.background
   },
 
   center: {
@@ -113,52 +191,100 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
+    color: COLORS.text,
     marginBottom: 16
   },
 
   card: {
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 12,
-    overflow: 'hidden'
+    marginBottom: 14,
+    padding: 16
   },
 
   lockedCard: {
-    borderRadius: 20,
     padding: 16,
-    marginTop: 10,
     opacity: 0.9
   },
 
   label: {
     fontSize: 13,
-    color: '#777'
+    color: COLORS.subText,
+    marginBottom: 4
   },
 
   big: {
     fontSize: 26,
-    fontWeight: '700'
+    fontWeight: '700',
+    color: COLORS.text
   },
 
   feedback: {
     marginTop: 6,
-    fontSize: 14
+    fontSize: 14,
+    color: COLORS.subText
   },
 
   section: {
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 6
+    color: COLORS.text,
+    marginBottom: 12
+  },
+
+  macroItem: {
+    marginBottom: 16
+  },
+
+  macroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4
+  },
+
+  macroLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.text,
+    marginLeft: 8
+  },
+
+  macroValue: {
+    fontSize: 14,
+    color: COLORS.subText,
+    marginBottom: 4
+  },
+
+  progressBar: {
+    height: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    overflow: 'hidden'
+  },
+
+  progressFill: {
+    height: '100%',
+    borderRadius: 4
   },
 
   lockedText: {
-    color: '#666',
-    marginBottom: 10
+    color: COLORS.subText,
+    marginBottom: 16
   },
 
   upgradeBtn: {
-    backgroundColor: '#6200ee',
-    padding: 10,
-    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    padding: 12,
+    borderRadius: 12,
     alignItems: 'center'
+  },
+
+  upgradeText: {
+    color: '#fff',
+    fontWeight: '600'
+  },
+
+  comingSoon: {
+    color: COLORS.subText,
+    textAlign: 'center',
+    fontStyle: 'italic'
   }
 });
