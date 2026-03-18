@@ -14,9 +14,6 @@ import COLORS from '../theme/colors';
 import GlassCard from '../components/GlassCard';
 import HomeSkeleton from '../components/HomeSkeleton';
 
-// 🔥 OPTIONAL: enable haptics
-// import * as Haptics from 'expo-haptics';
-
 export default function HomeScreen() {
   const [summary, setSummary] = useState<any>(null);
   const [goals, setGoals] = useState<any>(null);
@@ -59,9 +56,9 @@ export default function HomeScreen() {
           console.log('User goals fetched:', data);
           setGoals(data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Home screen data fetch error:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error occurred');
+        setError(err.message || 'Unknown error occurred');
         // Set default values to prevent app crash
         setSummary({ calories: 0, protein: 0, carbs: 0, fat: 0 });
       } finally {
@@ -98,10 +95,6 @@ export default function HomeScreen() {
 
         {/* 🔥 CALORIES CARD */}
         <Pressable
-          onPress={() => {
-            // 🔥 OPTIONAL: haptic feedback
-            // Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }}
           style={({ pressed }) => [
             { transform: [{ scale: pressed ? 0.98 : 1 }] }
           ]}
@@ -126,7 +119,7 @@ export default function HomeScreen() {
           </GlassCard>
         </Pressable>
 
-        {/* 🔥 MACROS */}
+        {/* 🔥 MACROS */}>
         <View style={styles.row}>
           {[
             { key: 'protein', label: 'Protein' },
@@ -135,10 +128,6 @@ export default function HomeScreen() {
           ].map((item, i) => (
             <Pressable
               key={i}
-              onPress={() => {
-                // 🔥 OPTIONAL: haptic
-                // Haptics.selectionAsync();
-              }}
               style={({ pressed }) => [
                 { transform: [{ scale: pressed ? 0.96 : 1 }] }
               ]}
