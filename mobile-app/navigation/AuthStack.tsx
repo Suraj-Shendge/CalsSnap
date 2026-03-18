@@ -9,7 +9,8 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { supabase } from '../services/supabase';
 import COLORS from '../theme/colors';
@@ -61,15 +62,15 @@ export default function AuthStack({ setIsGuest }: { setIsGuest: (guest: boolean)
       if (error) {
         Alert.alert('Login Error', error.message);
       }
-    } catch (error) {
-      Alert.alert('Login Error', 'An unexpected error occurred');
+    } catch (error: any) {
+      Alert.alert('Login Error', error.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   const register = async () => {
-    if (!email || !password || (showRegister && !name)) {
+    if (!email || !password) {
       Alert.alert('Validation Error', 'Please fill all required fields');
       return;
     }
@@ -96,8 +97,8 @@ export default function AuthStack({ setIsGuest }: { setIsGuest: (guest: boolean)
         );
         setShowRegister(false);
       }
-    } catch (error) {
-      Alert.alert('Registration Error', 'An unexpected error occurred');
+    } catch (error: any) {
+      Alert.alert('Registration Error', error.message || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
