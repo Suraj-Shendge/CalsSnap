@@ -23,7 +23,12 @@ workflows:
         script: |
           cd mobile-app/android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --warning-mode all
 
     artifacts:
       - mobile-app/android/app/build/outputs/**/*.apk
+
+    publishing:
+      email:
+        recipients:
+          - shendgesuraj07@gmail.com
