@@ -16,29 +16,38 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
 
-useEffect(() => {
-  const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
-    setSession(sess);
-  });
+  useEffect(() => {
+    // Set timeout to prevent indefinite loading
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('App loading timeout - forcing load completion');
+        setLoading(false);
+      }
+    }, 10000); // 10 seconds timeout
 
-  supabase.auth.getSession().then(({ data, error }) => {
-    if (error) {
-      console.error('Session error:', error);
-    }
-    setSession(data.session);
-    setLoading(false);
-  });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
+      console.log('Auth state changed:', _event, sess?.user?.id);
+      setSession(sess);
+      setLoading(false);
+    });
 
-  // Add timeout to prevent indefinite loading
-  const timeout = setTimeout(() => {
-    setLoading(false);
-  }, 5000);
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Get session error:', error);
+      }
+      console.log('Initial session check:', data.session?.user?.id);
+      setSession(data.session);
+      setLoading(false);
+    }).catch(error => {
+      console.error('Session check failed:', error);
+      setLoading(false); // Ensure loading is false even on error
+    });
 
-  return () => {
-    listener?.subscription.unsubscribe();
-    clearTimeout(timeout);
-  };
-}, []);
+    return () => {
+      listener?.subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
+  }, []);
 
   if (loading) {
     return (
