@@ -1,6 +1,7 @@
+// Complete replacement for mobile-app/App.tsx
 import 'react-native-url-polyfill/auto';
 import React, { useEffect, useState, useCallback } from 'react';
-import { ActivityIndicator, View, StyleSheet, AppState, Alert } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, AppState } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -18,95 +19,69 @@ export default function App() {
   const [isGuest, setIsGuest] = useState(false);
   const [appState, setAppState] = useState(AppState.currentState);
 
-  // Handle app state changes (background/foreground)
+  // Check existing session on app start
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (appState.match(/inactive|background/) && nextAppState === 'active') {
-        // App has come to the foreground, check session
-        checkSession();
-      }
-      setAppState(nextAppState);
-    });
-
-    return () => {
-      subscription?.remove();
-    };
-  }, [appState]);
-
-  const checkSession = useCallback(async () => {
-    try {
-      const storedSession = await AsyncStorage.getItem('user_session');
-      if (storedSession) {
-        const { userId, expiresAt } = JSON.parse(storedSession);
-        if (expiresAt > Date.now()) {
-          // Session still valid
-          const { data: { user }, error } = await supabase.auth.getUser();
-          if (!error && user?.id === userId) {
-            const { data } = await supabase.auth.getSession();
-            setSession(data.session);
-            setLoading(false);
-            return;
+    const checkExistingSession = async () => {
+      try {
+        // First check local storage
+        const storedSession = await AsyncStorage.getItem('user_session');
+        if (storedSession) {
+          const { userId, expiresAt } = JSON.parse(storedSession);
+          if (expiresAt > Date.now()) {
+            // Session still valid, check with Supabase
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (!error && user?.id === userId) {
+              const { data } = await supabase.auth.getSession();
+              if (data.session) {
+                setSession(data.session);
+                setLoading(false);
+                return;
+              }
+            }
           }
         }
-      }
 
-      // No valid session found, check with server
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
+        // No valid stored session, check with Supabase directly
+        const { data, error } = await supabase.auth.getSession();
+        if (!error && data.session) {
+          setSession(data.session);
+          // Store session info
+          await AsyncStorage.setItem('user_session', JSON.stringify({
+            userId: data.session.user.id,
+            expiresAt: data.session.expires_at * 1000
+          }));
+        }
+      } catch (error) {
         console.error('Session check error:', error);
+      } finally {
         setLoading(false);
-        return;
       }
-      
-      if (data.session) {
-        setSession(data.session);
-        
-        // Store session info for persistence
-        await AsyncStorage.setItem('user_session', JSON.stringify({
-          userId: data.session.user.id,
-          expiresAt: data.session.expires_at * 1000 // Convert to ms
-        }));
-      }
-    } catch (error) {
-      console.error('Session check failed:', error);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    checkExistingSession();
   }, []);
 
+  // Handle auth state changes
   useEffect(() => {
-    // Set timeout to prevent indefinite loading
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('App loading timeout - forcing load completion');
-        setLoading(false);
-      }
-    }, 10000); // 10 seconds timeout
-
     const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
-      console.log('Auth state changed:', _event, sess?.user?.id);
+      console.log('Auth state changed:', _event);
       setSession(sess);
       
       // Store session info for persistence
       if (sess) {
         AsyncStorage.setItem('user_session', JSON.stringify({
           userId: sess.user.id,
-          expiresAt: sess.expires_at * 1000 // Convert to ms
+          expiresAt: sess.expires_at * 1000
         }));
       } else {
         AsyncStorage.removeItem('user_session');
       }
-      
-      setLoading(false);
     });
-
-    checkSession();
 
     return () => {
       listener?.subscription.unsubscribe();
-      clearTimeout(timeout);
     };
-  }, [checkSession]);
+  }, []);
 
   if (loading) {
     return (
