@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import React, { useEffect, useState, useCallback } from 'react';
-import { ActivityIndicator, View, StyleSheet, AppState } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, AppState, Alert } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -35,6 +35,21 @@ export default function App() {
 
   const checkSession = useCallback(async () => {
     try {
+      const storedSession = await AsyncStorage.getItem('user_session');
+      if (storedSession) {
+        const { userId, expiresAt } = JSON.parse(storedSession);
+        if (expiresAt > Date.now()) {
+          // Session still valid
+          const { data: { user }, error } = await supabase.auth.getUser();
+          if (!error && user?.id === userId) {
+            const { data } = await supabase.auth.getSession();
+            setSession(data.session);
+            return;
+          }
+        }
+      }
+
+      // No valid session found, check with server
       const { data, error } = await supabase.auth.getSession();
       if (error) {
         console.error('Session check error:', error);
@@ -47,7 +62,7 @@ export default function App() {
         // Store session info for persistence
         await AsyncStorage.setItem('user_session', JSON.stringify({
           userId: data.session.user.id,
-          expiresAt: data.session.expires_at
+          expiresAt: data.session.expires_at * 1000 // Convert to ms
         }));
       }
     } catch (error) {
@@ -74,7 +89,7 @@ export default function App() {
       if (sess) {
         AsyncStorage.setItem('user_session', JSON.stringify({
           userId: sess.user.id,
-          expiresAt: sess.expires_at
+          expiresAt: sess.expires_at * 1000 // Convert to ms
         }));
       } else {
         AsyncStorage.removeItem('user_session');
@@ -106,11 +121,11 @@ export default function App() {
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             {session || isGuest ? (
               <Stack.Screen name="Main">
-                {() => <RootNavigator setIsGuest={setIsGuest} />}
+                {(props) => <RootNavigator {...props} setIsGuest={setIsGuest} />}
               </Stack.Screen>
             ) : (
               <Stack.Screen name="Auth" options={{ animation: 'fade' }}>
-                {() => <AuthStack setIsGuest={setIsGuest} />}
+                {(props) => <AuthStack {...props} setIsGuest={setIsGuest} />}
               </Stack.Screen>
             )}
           </Stack.Navigator>
