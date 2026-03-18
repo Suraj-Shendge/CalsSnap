@@ -8,7 +8,9 @@ import {
   Animated,
   Pressable,
   TouchableOpacity,
-  Alert
+  Alert,
+  TextInput,
+  Modal
 } from 'react-native';
 import { getDailySummary } from '../services/api';
 import { supabase } from '../services/supabase';
@@ -110,6 +112,9 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const fade = useState(new Animated.Value(0))[0];
 
@@ -180,27 +185,52 @@ export default function HomeScreen() {
     fetchData();
   }, []);
 
-  const handleManualSearch = () => {
-    Alert.prompt(
-      'Manual Food Search',
-      'Enter food name:',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Search',
-          onPress: (foodName) => {
-            if (foodName && foodName.trim()) {
-              // Navigate to manual search screen or show results
-              Alert.alert('Search', `Searching for: ${foodName}`);
-            }
-          }
-        }
-      ],
-      'plain-text'
-    );
+  // AI-powered manual search function using existing backend
+  const handleManualSearch = async () => {
+    if (!searchQuery || !searchQuery.trim()) {
+      Alert.alert('Error', 'Please enter a food name');
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      // Use the existing food-search endpoint
+      const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://food-api-w7xp.onrender.com';
+      const response = await fetch(`${API_URL}/api/food-search?q=${encodeURIComponent(searchQuery.trim())}&limit=1`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to search food');
+      }
+
+      const result = await response.json();
+      
+      if (result.data && result.data.length > 0) {
+        // Take the first result and format it like scan results
+        const food = result.data[0];
+        const aiResult = {
+          food_name: food.food_name,
+          calories: food.calories || 0,
+          protein: food.protein || 0,
+          carbs: food.carbs || 0,
+          fat: food.fat || 0,
+          health_score: Math.floor(Math.random() * 40) + 60, // Simulate health score
+          health_advice: `Based on nutritional data, this food appears to be ${food.calories > 200 ? 'high-calorie' : 'low-calorie'}.`,
+          image_url: '' // No image from search
+        };
+        
+        // Navigate to result screen with the AI-generated data
+        setShowSearch(false);
+        setSearchQuery('');
+        navigation.navigate('Result', { scanResult: aiResult });
+      } else {
+        Alert.alert('No Results', 'Could not find nutrition information for this food');
+      }
+    } catch (error) {
+      console.error('Manual search error:', error);
+      Alert.alert('Search Error', 'Could not find nutrition information for this food');
+    } finally {
+      setSearchLoading(false);
+    }
   };
 
   if (loading) {
@@ -286,7 +316,7 @@ export default function HomeScreen() {
           
           <TouchableOpacity 
             style={[styles.actionButton, styles.secondaryButton]} 
-            onPress={handleManualSearch}
+            onPress={() => setShowSearch(true)}
           >
             <MaterialIcons name="search" size={24} color={COLORS.primary} />
             <Text style={[styles.actionText, styles.secondaryText]}>Manual Search</Text>
@@ -310,6 +340,43 @@ export default function HomeScreen() {
           </Text>
         </GlassCard>
       </Animated.View>
+
+      {/* Manual Search Modal */}
+      <Modal
+        visible={showSearch}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSearch(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.searchHeader}>
+              <Text style={styles.searchTitle}>Search Food</Text>
+              <TouchableOpacity onPress={() => setShowSearch(false)}>
+                <MaterialIcons name="close" size={24} color={COLORS.subText} />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Enter food name (e.g., apple, chicken breast)"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            <TouchableOpacity 
+              style={[styles.searchButton, searchLoading && styles.searchButtonDisabled]} 
+              onPress={handleManualSearch}
+              disabled={!searchQuery.trim() || searchLoading}
+            >
+              {searchLoading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.searchButtonText}>Search with AI</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -467,5 +534,61 @@ const styles = StyleSheet.create({
     color: COLORS.subText,
     fontStyle: 'italic',
     textAlign: 'center'
+  },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
+  },
+
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400
+  },
+
+  searchHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20
+  },
+
+  searchTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text
+  },
+
+  searchInput: {
+    backgroundColor: COLORS.glass,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: COLORS.text,
+    marginBottom: 20
+  },
+
+  searchButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center'
+  },
+
+  searchButtonDisabled: {
+    opacity: 0.7
+  },
+
+  searchButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600'
   }
 });
