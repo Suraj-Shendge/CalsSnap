@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { scanFood } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 import { canUseFeature, incrementUsage } from '../utils/usage';
+import COLORS from '../theme/colors';
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
@@ -22,21 +23,24 @@ export default function ScanScreen() {
   const capture = async () => {
     if (!camRef.current) return;
 
-    // 🔥 PAYWALL CHECK (this was missing)
-    const allowed = await canUseFeature();
-    if (!allowed) {
-      Alert.alert(
-        "Limit reached",
-        "You’ve used your free scans. Create an account to continue.",
-        [
-          {
-            text: "Go to Paywall",
-            onPress: () => navigation.navigate('Paywall')
-          },
-          { text: "Cancel", style: "cancel" }
-        ]
-      );
-      return;
+    // Check feature usage for non-guest users
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const allowed = await canUseFeature();
+      if (!allowed) {
+        Alert.alert(
+          "Limit reached",
+          "You've used your free scans. Create an account to continue.",
+          [
+            {
+              text: "Go to Paywall",
+              onPress: () => navigation.navigate('Paywall')
+            },
+            { text: "Cancel", style: "cancel" }
+          ]
+        );
+        return;
+      }
     }
 
     setLoading(true);
@@ -44,16 +48,17 @@ export default function ScanScreen() {
     try {
       const photo = await camRef.current.takePictureAsync({ quality: 0.7 });
 
-      // 🔥 increment usage BEFORE API (important)
-      await incrementUsage();
+      // Increment usage BEFORE API (important)
+      if (user) {
+        await incrementUsage();
+      }
 
       const result = await scanFood(photo.uri);
-
       navigation.navigate('Result', { scanResult: result });
 
     } catch (e: any) {
       console.error(e);
-      Alert.alert('Scan error', e.message);
+      Alert.alert('Scan error', e.message || 'Failed to scan food');
     } finally {
       setLoading(false);
     }
@@ -62,7 +67,7 @@ export default function ScanScreen() {
   if (hasPermission === null) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
@@ -70,7 +75,15 @@ export default function ScanScreen() {
   if (!hasPermission) {
     return (
       <View style={styles.center}>
-        <Text>No camera permission.</Text>
+        <Text>No camera permission granted.</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => Camera.requestCameraPermissionsAsync().then(({ status }) => {
+            setHasPermission(status === 'granted');
+          })}
+        >
+          <Text style={styles.retryText}>Request Permission</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -79,8 +92,8 @@ export default function ScanScreen() {
     <View style={styles.container}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.toggleDrawer?.()}>
-          <MaterialIcons name="menu" size={28} color="#fff" />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <MaterialIcons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Scanner</Text>
         <View style={{ width: 28 }} />
@@ -125,22 +138,38 @@ export default function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#000' 
+  },
+  
   topBar: {
     height: 50,
-    backgroundColor: '#111',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12
+    paddingHorizontal: 12,
+    zIndex: 1
   },
-  title: { color: '#fff', fontSize: 18 },
-  camera: { flex: 1 },
+  
+  title: { 
+    color: '#fff', 
+    fontSize: 18,
+    fontWeight: '600'
+  },
+  
+  camera: { 
+    flex: 1 
+  },
+  
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    zIndex: 2
   },
+  
   frame: {
     width: 280,
     height: 280,
@@ -148,18 +177,29 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     borderRadius: 12
   },
+  
   bottomBar: {
     height: 100,
-    backgroundColor: '#111',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
+    zIndex: 1
   },
-  actionBtn: { alignItems: 'center' },
-  actionText: { color: '#fff', fontSize: 12, marginTop: 4 },
+  
+  actionBtn: { 
+    alignItems: 'center' 
+  },
+  
+  actionText: { 
+    color: '#fff', 
+    fontSize: 12, 
+    marginTop: 4 
+  },
+  
   captureBtn: {
-    backgroundColor: '#ff1744',
+    backgroundColor: COLORS.primary,
     width: 70,
     height: 70,
     borderRadius: 35,
@@ -167,5 +207,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     elevation: 5
   },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' }
+  
+  center: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    backgroundColor: '#000'
+  },
+  
+  retryButton: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: 8
+  },
+  
+  retryText: {
+    color: '#fff',
+    fontSize: 16
+  }
 });
