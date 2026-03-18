@@ -44,6 +44,7 @@ export default function App() {
           if (!error && user?.id === userId) {
             const { data } = await supabase.auth.getSession();
             setSession(data.session);
+            setLoading(false);
             return;
           }
         }
@@ -53,6 +54,7 @@ export default function App() {
       const { data, error } = await supabase.auth.getSession();
       if (error) {
         console.error('Session check error:', error);
+        setLoading(false);
         return;
       }
       
