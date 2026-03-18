@@ -16,21 +16,29 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
 
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
-      setSession(sess);
-      setLoading(false);
-    });
+useEffect(() => {
+  const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
+    setSession(sess);
+  });
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+  supabase.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      console.error('Session error:', error);
+    }
+    setSession(data.session);
+    setLoading(false);
+  });
 
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
-  }, []);
+  // Add timeout to prevent indefinite loading
+  const timeout = setTimeout(() => {
+    setLoading(false);
+  }, 5000);
+
+  return () => {
+    listener?.subscription.unsubscribe();
+    clearTimeout(timeout);
+  };
+}, []);
 
   if (loading) {
     return (
