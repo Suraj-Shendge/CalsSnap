@@ -1,11 +1,21 @@
+// Complete replacement for mobile-app/screens/ScanScreen.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ActivityIndicator, 
+  Alert,
+  StatusBar
+} from 'react-native';
 import { Camera } from 'expo-camera';
 import { MaterialIcons } from '@expo/vector-icons';
 import { scanFood } from '../services/api';
 import { useNavigation } from '@react-navigation/native';
 import { canUseFeature, incrementUsage } from '../utils/usage';
 import COLORS from '../theme/colors';
+import { supabase } from '../services/supabase';
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
@@ -90,24 +100,30 @@ export default function ScanScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      
       {/* Top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={28} color="#fff" />
+          <MaterialIcons name="close" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Scanner</Text>
         <View style={{ width: 28 }} />
       </View>
 
-      {/* Camera preview */}
-      <Camera style={styles.camera} ref={ref => (camRef.current = ref)} />
+      {/* Camera preview - FULL SCREEN */}
+      <Camera 
+        style={styles.camera} 
+        ref={ref => (camRef.current = ref)}
+        ratio="16:9"
+      />
 
       {/* Scan frame overlay */}
       <View style={styles.overlay}>
         <View style={styles.frame} />
       </View>
 
-      {/* Bottom actions */}
+      {/* Bottom actions - FULL WIDTH */}
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={styles.actionBtn}
@@ -121,7 +137,7 @@ export default function ScanScreen() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <MaterialIcons name="camera" size={32} color="#fff" />
+            <MaterialIcons name="circle" size={60} color="#fff" />
           )}
         </TouchableOpacity>
 
@@ -144,13 +160,16 @@ const styles = StyleSheet.create({
   },
   
   topBar: {
+    position: 'absolute',
+    top: 80, // Below status bar
+    left: 0,
+    right: 0,
     height: 50,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    zIndex: 1
+    paddingHorizontal: 16,
+    zIndex: 10
   },
   
   title: { 
@@ -167,7 +186,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2
+    zIndex: 5
   },
   
   frame: {
@@ -179,13 +198,17 @@ const styles = StyleSheet.create({
   },
   
   bottomBar: {
-    height: 100,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 120,
     backgroundColor: 'rgba(0,0,0,0.5)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 20,
-    zIndex: 1
+    zIndex: 10
   },
   
   actionBtn: { 
@@ -199,13 +222,10 @@ const styles = StyleSheet.create({
   },
   
   captureBtn: {
-    backgroundColor: COLORS.primary,
     width: 70,
     height: 70,
-    borderRadius: 35,
     justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5
+    alignItems: 'center'
   },
   
   center: { 
