@@ -1,20 +1,17 @@
 // backend/services/llamaService.js
 
-// Temporary stub to fix deployment
-// You can replace this later with actual AI logic
-
 export async function generateHealthAdvice(text) {
   return {
-    advice: 'Based on your foof (${text}), try to balance protein, carbs and fats.',
+    advice: `Based on your food (${text}), try to balance protein, carbs, and fats.`,
     items: [
       {
         name: text,
         calories: 200,
         protein: 10,
         carbs: 20,
-        fat: 5
-      }
+        fat: 5,
+      },
     ],
-    total_calories: 200
+    total_calories: 200,
   };
 }
