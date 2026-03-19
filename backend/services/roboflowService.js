@@ -54,9 +54,6 @@ export async function detectFoodRoboflow(imageBuffer) {
   const predictions = result?.predictions || result?.objects || [];
 
 
-  // Different Roboflow models may return `predictions` or `objects`
-  const predictions = result?.predictions || result?.objects || [];
-
   // Normalise to the shape the scan route expects
 
   const detections = predictions.map((p) => ({
