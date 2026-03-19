@@ -5,7 +5,7 @@
 
 export async function generateHealthAdvice(text) {
   return {
-    advice: 'Based on your foof (${text}), try to balance protein, carbs and fats.'
+    advice: 'Based on your foof (${text}), try to balance protein, carbs and fats.',
     items: [
       {
         name: text,
