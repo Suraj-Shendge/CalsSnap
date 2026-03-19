@@ -3,8 +3,9 @@
 // Temporary stub to fix deployment
 // You can replace this later with actual AI logic
 
-export async function analyzeTextWithLlama(text) {
+export async function generateHealthAdvice(text) {
   return {
+    advice: 'Based on your foof (${text}), try to balance protein, carbs and fats.'
     items: [
       {
         name: text,
