@@ -12,15 +12,22 @@ export default function AddFoodScreen({ navigation }) {
     try {
       setLoading(true);
 
-      const res = await axios.post(`${API_URL}/analyze`, {
+      console.log("Sending request...");
+
+      const res = await axios.post(`${API_URL}/api/analyze`, {
         text: text,
-        userId: "demo-user"
+        userId: "test123"
       });
+
+      console.log("API RESPONSE:", res.data);
 
       navigation.navigate("Result", { data: res.data });
 
     } catch (err) {
-      console.log("API ERROR:", err.message);
+      console.log(
+        "FULL ERROR:",
+        err.response?.data || err.message
+      );
     } finally {
       setLoading(false);
     }
