@@ -4,8 +4,12 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import morgan from "morgan";
 
+// Existing routes
 import getUserProfile from "./routes/getUserProfile.js";
 import saveUserProfile from "./routes/saveUserProfile.js";
+
+// ✅ ADD THIS
+import analyzeFoodRoute from "./routes/analyzeFood.js";
 
 dotenv.config();
 
@@ -20,6 +24,9 @@ app.use(morgan("dev"));
 app.use("/user", getUserProfile);
 app.use("/save-profile", saveUserProfile);
 
+// ✅ ADD THIS LINE (MOST IMPORTANT)
+app.use("/api/analyzeFood", analyzeFoodRoute);
+
 // Health check
 app.get("/", (req, res) => {
   res.send("Bite AI backend is running 🚀");
@@ -30,6 +37,7 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected");
+
     app.listen(process.env.PORT || 5000, () => {
       console.log("Server running");
     });
