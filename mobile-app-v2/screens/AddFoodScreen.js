@@ -69,3 +69,4 @@ export default function AddFoodScreen({ navigation }) {
     </View>
   );
 }
+console.log("VERSION 2 API CALL");
