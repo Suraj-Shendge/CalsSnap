@@ -9,13 +9,13 @@ export const analyzeFood = async (text) => {
     }
 
     const prompt = `
-You are a nutrition AI.
+You are a strict nutrition API.
 
-Analyze this food and return JSON ONLY:
+Return ONLY valid JSON. No text, no explanation.
 
 Food: ${text}
 
-Return format:
+Format:
 {
   "name": "food name",
   "calories": number,
@@ -44,19 +44,32 @@ Return format:
 
     const data = await response.json();
 
-    const textResponse =
+    const rawText =
       data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Extract JSON safely
-    const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+    console.log("Gemini RAW:", rawText);
 
-    if (!jsonMatch) {
-      throw new Error("Invalid AI response");
+    // 🧠 Smart JSON extraction
+    let cleaned = rawText
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    const jsonStart = cleaned.indexOf("{");
+    const jsonEnd = cleaned.lastIndexOf("}");
+
+    if (jsonStart === -1 || jsonEnd === -1) {
+      throw new Error("No JSON found in AI response");
     }
 
-    return JSON.parse(jsonMatch[0]);
+    const jsonString = cleaned.substring(jsonStart, jsonEnd + 1);
+
+    const parsed = JSON.parse(jsonString);
+
+    return parsed;
+
   } catch (error) {
-    console.error("Gemini Error:", error);
+    console.error("Gemini Error:", error.message);
     throw error;
   }
 };
