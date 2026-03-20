@@ -1,56 +1,62 @@
-import OpenAI from "openai";
+import fetch from "node-fetch";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 export const analyzeFood = async (text) => {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("Missing OPENAI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("Missing GEMINI_API_KEY");
     }
 
     const prompt = `
-You are a nutrition expert.
+You are a nutrition AI.
 
-Analyze the following food and return JSON:
-- name
-- calories
-- protein (g)
-- carbs (g)
-- fat (g)
+Analyze this food and return JSON ONLY:
 
 Food: ${text}
 
-Respond ONLY in JSON format.
+Return format:
+{
+  "name": "food name",
+  "calories": number,
+  "protein": number,
+  "carbs": number,
+  "fat": number
+}
 `;
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a nutrition AI." },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.2,
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      }
+    );
 
-    const output = response.choices[0].message.content;
+    const data = await response.json();
 
-    // Try parsing JSON safely
-    try {
-      return JSON.parse(output);
-    } catch {
-      return {
-        raw: output,
-      };
+    const textResponse =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // Extract JSON safely
+    const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+
+    if (!jsonMatch) {
+      throw new Error("Invalid AI response");
     }
 
+    return JSON.parse(jsonMatch[0]);
   } catch (error) {
-    console.error("OpenAI ERROR:", error.message);
-
-    return {
-      error: "AI failed",
-      details: error.message,
-    };
+    console.error("Gemini Error:", error);
+    throw error;
   }
 };
