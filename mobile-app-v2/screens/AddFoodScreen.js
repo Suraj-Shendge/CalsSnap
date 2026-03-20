@@ -2,31 +2,36 @@ import { View, TextInput, TouchableOpacity, Text } from "react-native";
 import { useState } from "react";
 import axios from "axios";
 
-const API_URL = "https://bite-ai-backend.onrender.com";
-
 export default function AddFoodScreen({ navigation }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ✅ IMPORTANT: correct backend URL
+  const API_URL = "https://bite-ai-backend.onrender.com";
 
   const analyze = async () => {
     try {
       setLoading(true);
 
-      console.log("Sending request to analyzeFood...");
+      console.log("CALLING API...");
 
-      const res = await axios.post(`${API_URL}/api/analyzeFood`, {
-        text: text,
-        userId: "test123"
-      });
+      const response = await axios.post(
+        `${API_URL}/api/analyzeFood`,
+        {
+          text: text
+        }
+      );
 
-      console.log("API RESPONSE:", res.data);
+      console.log("RESPONSE:", response.data);
 
-      navigation.navigate("Result", { data: res.data });
+      navigation.navigate("Result", { data: response.data });
 
-    } catch (err) {
+    } catch (error) {
       console.log(
-        "FULL ERROR:",
-        err.response?.data || err.message
+        "ERROR:",
+        error.response?.status,
+        error.response?.data,
+        error.message
       );
     } finally {
       setLoading(false);
@@ -34,8 +39,8 @@ export default function AddFoodScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
-
+    <View style={{ flex: 1, padding: 20, justifyContent: "center" }}>
+      
       <TextInput
         placeholder="What did you eat?"
         value={text}
