@@ -6,14 +6,14 @@ export default function AddFoodScreen({ navigation }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ IMPORTANT: correct backend URL
+  // ✅ EXACT backend URL
   const API_URL = "https://bite-ai-backend.onrender.com";
 
   const analyze = async () => {
     try {
       setLoading(true);
 
-      console.log("CALLING API...");
+      console.log("REQUEST URL:", `${API_URL}/api/analyzeFood`);
 
       const response = await axios.post(
         `${API_URL}/api/analyzeFood`,
@@ -22,17 +22,16 @@ export default function AddFoodScreen({ navigation }) {
         }
       );
 
-      console.log("RESPONSE:", response.data);
+      console.log("SUCCESS:", response.data);
 
-      navigation.navigate("Result", { data: response.data });
+      navigation.navigate("Result", {
+        data: response.data
+      });
 
     } catch (error) {
-      console.log(
-        "ERROR:",
-        error.response?.status,
-        error.response?.data,
-        error.message
-      );
+      console.log("STATUS:", error.response?.status);
+      console.log("DATA:", error.response?.data);
+      console.log("MESSAGE:", error.message);
     } finally {
       setLoading(false);
     }
@@ -40,7 +39,7 @@ export default function AddFoodScreen({ navigation }) {
 
   return (
     <View style={{ flex: 1, padding: 20, justifyContent: "center" }}>
-      
+
       <TextInput
         placeholder="What did you eat?"
         value={text}
