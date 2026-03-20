@@ -12,9 +12,9 @@ export default function AddFoodScreen({ navigation }) {
     try {
       setLoading(true);
 
-      console.log("Sending request...");
+      console.log("Sending request to analyzeFood...");
 
-      const res = await axios.post(`${API_URL}/api/analyze`, {
+      const res = await axios.post(`${API_URL}/api/analyzeFood`, {
         text: text,
         userId: "test123"
       });
