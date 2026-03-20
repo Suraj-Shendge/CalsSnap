@@ -6,13 +6,16 @@ export default function AddFoodScreen({ navigation }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ EXACT backend URL
   const API_URL = "https://bite-ai-backend.onrender.com";
 
   const analyze = async () => {
     try {
       setLoading(true);
 
+      // ✅ DEBUG MARKER (VERY IMPORTANT)
+      console.log("VERSION 2 API CALL");
+
+      // ✅ SHOW EXACT URL
       console.log("REQUEST URL:", `${API_URL}/api/analyzeFood`);
 
       const response = await axios.post(
@@ -22,7 +25,7 @@ export default function AddFoodScreen({ navigation }) {
         }
       );
 
-      console.log("SUCCESS:", response.data);
+      console.log("SUCCESS RESPONSE:", response.data);
 
       navigation.navigate("Result", {
         data: response.data
@@ -69,4 +72,3 @@ export default function AddFoodScreen({ navigation }) {
     </View>
   );
 }
-console.log("VERSION 2 API CALL");
